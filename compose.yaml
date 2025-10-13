@@ -1,6 +1,6 @@
 services:
   client_service:
-    build: client_app
+    build: delivery_app
     ports:
       - '13001:8000'
     volumes:

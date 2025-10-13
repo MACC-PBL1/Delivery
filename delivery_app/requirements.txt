@@ -1,0 +1,18 @@
+# FastAPI framework
+fastapi~=0.114
+
+# ASGI server
+hypercorn~=0.17
+
+# Pydantic v2 para validación de schemas
+pydantic~=2.9
+
+# ORM y base de datos
+SQLAlchemy~=2.0
+aiosqlite~=0.20
+
+# Logs coloridos opcionales
+coloredlogs~=15.0
+
+# YAML (opcional)
+PyYAML~=6.0
