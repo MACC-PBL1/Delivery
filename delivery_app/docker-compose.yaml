@@ -1,47 +1,47 @@
-services:
-  rabbitmq:
-    image: rabbitmq:3-management
-    ports:
-      - "5672:5672"   # puerto AMQP
-      - "15672:15672" # interfaz web
-    environment:
-      RABBITMQ_DEFAULT_USER: user
-      RABBITMQ_DEFAULT_PASS: password
-    healthcheck:
-      test: ["CMD", "rabbitmqctl", "status"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-    networks:
-      - delivery-network
+# services:
+#   rabbitmq:
+#     image: rabbitmq:3-management
+#     ports:
+#       - "5672:5672"   # puerto AMQP
+#       - "15672:15672" # interfaz web
+#     environment:
+#       RABBITMQ_DEFAULT_USER: user
+#       RABBITMQ_DEFAULT_PASS: password
+#     healthcheck:
+#       test: ["CMD", "rabbitmqctl", "status"]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+#       start_period: 20s
+#     networks:
+#       - delivery-network
 
-  delivery:
-    build: .
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    environment:
-      RABBITMQ_URL: amqp://user:password@rabbitmq:5672/
-      APP_VERSION: 1.0.0
-      SQLALCHEMY_DATABASE_URL: sqlite+aiosqlite:///./delivery.db
-    ports:
-      - "8000:8000"
-    volumes:
-      - delivery-data:/home/pyuser/code
-    command: /home/pyuser/code/entrypoint.sh
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/delivery/"]
-      interval: 15s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-    networks:
-      - delivery-network
+#   delivery:
+#     build: .
+#     depends_on:
+#       rabbitmq:
+#         condition: service_healthy
+#     environment:
+#       RABBITMQ_URL: amqp://user:password@rabbitmq:5672/
+#       APP_VERSION: 1.0.0
+#       SQLALCHEMY_DATABASE_URL: sqlite+aiosqlite:///./delivery.db
+#     ports:
+#       - "8000:8000"
+#     volumes:
+#       - delivery-data:/home/pyuser/code
+#     command: /home/pyuser/code/entrypoint.sh
+#     healthcheck:
+#       test: ["CMD", "curl", "-f", "http://localhost:8000/delivery/"]
+#       interval: 15s
+#       timeout: 10s
+#       retries: 5
+#       start_period: 30s
+#     networks:
+#       - delivery-network
 
-volumes:
-  delivery-data:
+# volumes:
+#   delivery-data:
 
-networks:
-  delivery-network:
-    driver: bridge
+# networks:
+#   delivery-network:
+#     driver: bridge

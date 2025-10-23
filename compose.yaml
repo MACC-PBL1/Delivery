@@ -1,11 +1,9 @@
 services:
-  payment:
-    build: fastapi_app
+   delivery_app:
+    build: delivery_app
     ports:
-      - '13000:8000'
-      - '13443:8443'
+      - '13002:8000'
     volumes:
-      #- './fastapi_app:/home/pyuser/code'
       - './db_volume:/volume'
     environment:
       PYTHONUNBUFFERED: 1
