@@ -1,16 +1,26 @@
 # -*- coding: utf-8 -*-
 """FastAPI router definitions for Delivery Service."""
+
+# ----------------------------------------
+# Imports
+# ----------------------------------------
 import logging
 from typing import List
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.sql import crud, schemas
 from app.dependencies import get_db
+from pydantic import BaseModel
 
+# ----------------------------------------
 # Configurar logger
+# ----------------------------------------
 logger = logging.getLogger(__name__)
 
+# ----------------------------------------
 # Crear router principal
+# ----------------------------------------
 router = APIRouter()
 
 # ------------------------------------------------------------------------------------
@@ -22,13 +32,11 @@ router = APIRouter()
     response_model=schemas.Message,
 )
 async def health_check():
-    """Endpoint para verificar que el Delivery Service está activo."""
     logger.debug("GET '/' endpoint called.")
     return {"detail": "OK"}
 
-
 # ------------------------------------------------------------------------------------
-# Deliveries
+# Deliveries endpoints
 # ------------------------------------------------------------------------------------
 @router.post(
     "/deliveries",
@@ -41,10 +49,8 @@ async def create_delivery(
     delivery: schemas.DeliveryCreate,
     db: AsyncSession = Depends(get_db)
 ):
-    """Crea una nueva entrega (delivery)."""
     logger.debug("POST '/deliveries' endpoint called.")
     return await crud.create_delivery(db, delivery)
-
 
 @router.get(
     "/deliveries",
@@ -57,10 +63,8 @@ async def get_delivery_list(
     skip: int = 0,
     limit: int = 10
 ):
-    """Obtiene una lista de todas las entregas (con paginación)."""
     logger.debug("GET '/deliveries' endpoint called.")
     return await crud.get_deliveries(db, skip=skip, limit=limit)
-
 
 @router.get(
     "/deliveries/{delivery_id}",
@@ -72,13 +76,14 @@ async def get_single_delivery(
     delivery_id: int,
     db: AsyncSession = Depends(get_db)
 ):
-    """Obtiene una entrega específica por su ID."""
     logger.debug("GET '/deliveries/%i' endpoint called.", delivery_id)
     delivery = await crud.get_delivery(db, delivery_id)
     if not delivery:
-        return {"detail": f"Delivery {delivery_id} not found"}
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Delivery {delivery_id} not found"
+        )
     return delivery
-
 
 @router.put(
     "/deliveries/{delivery_id}",
@@ -91,13 +96,18 @@ async def update_delivery(
     delivery_update: schemas.DeliveryUpdate,
     db: AsyncSession = Depends(get_db)
 ):
-    """Actualiza una entrega existente (dirección o estado)."""
     logger.debug("PUT '/deliveries/%i' endpoint called.", delivery_id)
-    delivery = await crud.update_delivery(db, delivery_id, delivery_update)
+    
+    # Convertir el schema Pydantic a dict, eliminando None
+    updates = delivery_update.model_dump(exclude_unset=True)
+    
+    delivery = await crud.update_delivery(db, delivery_id, updates)
     if not delivery:
-        return {"detail": f"Delivery {delivery_id} not found"}
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Delivery {delivery_id} not found"
+        )
     return delivery
-
 
 @router.delete(
     "/deliveries/{delivery_id}",
@@ -118,9 +128,42 @@ async def delete_delivery(
     delivery_id: int,
     db: AsyncSession = Depends(get_db)
 ):
-    """Elimina una entrega por su ID."""
     logger.debug("DELETE '/deliveries/%i' endpoint called.", delivery_id)
     delivery = await crud.delete_delivery(db, delivery_id)
     if not delivery:
-        return {"detail": f"Delivery {delivery_id} not found"}
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Delivery {delivery_id} not found"
+        )
     return {"detail": f"Delivery {delivery_id} deleted"}
+
+# ------------------------------------------------------------------------------------
+# Endpoint para actualizar address y status
+# ------------------------------------------------------------------------------------
+class AddressPayload(BaseModel):
+    address: str
+    jwt: str
+
+@router.post(
+    "/address/{delivery_id}",
+    response_model=schemas.DeliveryOut,
+    summary="Update delivery address",
+    tags=["Delivery"]
+)
+async def update_delivery_address(
+    delivery_id: int,
+    payload: AddressPayload,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Actualiza el address de un delivery y cambia el status a 'delivering'.
+    """
+    # Validar JWT aquí si es necesario
+    updates = {"address": payload.address, "status": "delivering"}
+    delivery = await crud.update_delivery(db, delivery_id, updates)
+    if not delivery:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Delivery {delivery_id} not found"
+        )
+    return delivery

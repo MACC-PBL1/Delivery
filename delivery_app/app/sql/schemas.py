@@ -18,7 +18,8 @@ class Message(BaseModel):
 class DeliveryBase(BaseModel):
     """Campos comunes de una entrega (Delivery)."""
     order_id: int = Field(..., example=101)
-    address: str = Field(..., example="Calle Mayor 123, Madrid")
+    client_id: int = Field(..., example=1)  # AGREGADO: client_id obligatorio
+    address: str = Field("", example="Calle Mayor 123, Madrid")  # Default vacío
 
 
 class DeliveryCreate(DeliveryBase):

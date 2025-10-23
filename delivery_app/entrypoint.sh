@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 # entrypoint.sh: arranca el microservicio Delivery con Hypercorn
 
 # Mostrar el nombre del servicio
@@ -10,6 +11,10 @@ IP=$(hostname -i)
 export IP
 echo "IP: ${IP}"
 
+# Configurar PYTHONPATH para que Python encuentre el módulo 'app'
+export PYTHONPATH=/home/pyuser/code:$PYTHONPATH
+echo "PYTHONPATH: $PYTHONPATH"
+
 # Función para manejar señales de terminación
 terminate() {
     echo "Termination signal received, shutting down..."
@@ -19,6 +24,12 @@ terminate() {
 }
 
 trap terminate SIGTERM SIGINT
+
+# Opcional: esperar a RabbitMQ si el microservicio depende de él
+until nc -z rabbitmq 5672; do
+    echo "Esperando a RabbitMQ..."
+    sleep 1
+done
 
 # Arranca Hypercorn para exponer FastAPI en 0.0.0.0:8000
 hypercorn --bind 0.0.0.0:8000 app.main:app &

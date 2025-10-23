@@ -22,5 +22,5 @@ SessionLocal = sessionmaker(
     class_=AsyncSession,
     future=True
 )
-
+async_session = SessionLocal
 Base = declarative_base()

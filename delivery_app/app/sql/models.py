@@ -47,7 +47,24 @@ class Delivery(BaseModel):
     order_id = Column(Integer, nullable=False)
 
     # Dirección de entrega (obligatoria)
-    address = Column(String(255), nullable=False)
+    address = Column(String(255), nullable=True)
 
     # Estado actual de la entrega (por defecto, 'pending')
     status = Column(String(50), default="pending")
+
+    #identificar al cliente
+    client_id = Column(Integer, nullable=False)
+
+
+    #Delivery: Se crea un delivery, sin informacion del address produciendose...
+    #Crea un order y seguido empieza a producir el delivery justo despues de que le haya mandado a machine a crear las piezas. d
+    #Despues de que haya terminado de crear las piezas, order le envia confirmacion
+    #Delivery espera. En order obligatorio meter el address, para que coja el delivery.
+    #Cuando le llega el address, delivery empieza a hacer la entrega.
+    #cuando el delivery este terminado, delivery tiene que enviarle la confirmacion al order, de que la entrega ha sido realizada.
+    #El delivery, despues de que termine machine de crearse las piezas, recoge el address
+    #le envia la confirmacion a order de que ha enviado la entrega.
+    
+
+
+
