@@ -9,7 +9,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.sql import crud, schemas
+from .sql import crud, schemas
 from app.dependencies import get_db
 from pydantic import BaseModel
 
