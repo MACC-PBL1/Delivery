@@ -29,7 +29,11 @@ async def event_update_delivery_status(message: MessageType) -> None:
     async with SessionLocal() as db:
         await update_status(db, order_id, status)
 
-@register_queue_handler(LISTENING_QUEUES["public_key"])
+@register_queue_handler(
+    queue=LISTENING_QUEUES["public_key"],
+    exchange="public_key",
+    exchange_type="fanout"
+)
 def public_key(message: MessageType) -> None:
     global PUBLIC_KEY
     assert (public_key := message.get("public_key")) is not None, "'public_key' field should be present."
