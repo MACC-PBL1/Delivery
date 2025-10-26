@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 # ----------------------------------------
 # Crear router principal
 # ----------------------------------------
-router = APIRouter()
+Router = APIRouter()
 Bearer = HTTPBearer()
 
 def create_jwt_verifier(public_key: Optional[str], algorithm: str = "RS256"):
@@ -58,7 +58,7 @@ verify_token = create_jwt_verifier(PUBLIC_KEY)
 # ------------------------------------------------------------------------------------
 # Health check
 # ------------------------------------------------------------------------------------
-@router.get(
+@Router.get(
     "/",
     summary="Health check endpoint",
     response_model=Message,
@@ -70,7 +70,7 @@ async def health_check():
 # ------------------------------------------------------------------------------------
 # Address
 # ------------------------------------------------------------------------------------
-@router.post(
+@Router.post(
     "/address",
     summary="Add address for delivery",
 )
