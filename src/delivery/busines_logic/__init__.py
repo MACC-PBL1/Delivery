@@ -32,7 +32,7 @@ async def delivery_process(
     logger.info(f"Order {order_id}: Delivered")
 
     with RabbitMQPublisher(
-        queue=PUBLISHING_QUEUES["confirmation"],
+        queue=PUBLISHING_QUEUES["update_order"],
         rabbitmq_config=RABBITMQ_CONFIG,
     ) as publisher:
         publisher.publish({

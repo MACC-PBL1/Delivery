@@ -1,4 +1,7 @@
-from .global_vars import LISTENING_QUEUES
+from .global_vars import (
+    LISTENING_QUEUES,
+    PUBLIC_KEY,
+)
 from ..sql.crud import (
     create_delivery,
     update_status
@@ -28,4 +31,6 @@ async def event_update_delivery_status(message: MessageType) -> None:
 
 @register_queue_handler(LISTENING_QUEUES["public_key"])
 def public_key(message: MessageType) -> None:
-    pass
+    global PUBLIC_KEY
+    assert (public_key := message.get("public_key")) is not None, "'public_key' field should be present."
+    PUBLIC_KEY = str(public_key)
