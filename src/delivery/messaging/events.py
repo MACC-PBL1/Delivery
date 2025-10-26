@@ -21,7 +21,7 @@ async def event_create_delivery(message: MessageType) -> None:
     async with SessionLocal() as db:
         create_delivery(db, order_id, client_id)
 
-@register_queue_handler(LISTENING_QUEUES["delivery.update_status"])
+@register_queue_handler(LISTENING_QUEUES["update_status"])
 async def event_update_delivery_status(message: MessageType) -> None:
     assert (order_id := message.get("order_id")) is not None, "'order_id' field should be present."
     assert (status := message.get("status")) is not None, "'status' field should be present."
