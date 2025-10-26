@@ -4,21 +4,14 @@ from ..sql import (
     Message,
     update_address
 )
+from chassis.security import create_jwt_verifier
 from chassis.sql import get_db
-from chassis.routers import raise_and_log_error
 from fastapi import (
     APIRouter, 
     Depends, 
-    status,
-)
-from fastapi.security import (
-    HTTPAuthorizationCredentials,
-    HTTPBearer,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional
 import asyncio
-import jwt
 import logging
 
 # ----------------------------------------
@@ -30,30 +23,6 @@ logger = logging.getLogger(__name__)
 # Crear router principal
 # ----------------------------------------
 Router = APIRouter()
-Bearer = HTTPBearer()
-
-def create_jwt_verifier(public_key: Optional[str], algorithm: str = "RS256"):
-    """
-    Factory function to create a JWT verifier with a specific public key.
-    """
-    def verify_token(credentials: HTTPAuthorizationCredentials = Depends(Bearer)):
-        try:
-            assert PUBLIC_KEY is not None, "'PUBLIC_KEY' is None"
-            payload = jwt.decode(
-                credentials.credentials,
-                public_key,
-                algorithms=[algorithm]
-            )
-            return payload
-        except jwt.InvalidTokenError:
-            raise_and_log_error(logger, status.HTTP_401_UNAUTHORIZED, "Invalid token")
-        except Exception as e:
-            raise_and_log_error(logger, status.HTTP_500_INTERNAL_SERVER_ERROR, f"Internal error: {e}")
-    
-    return verify_token
-
-# Create the verifier with your public key
-verify_token = create_jwt_verifier(PUBLIC_KEY)
 
 # ------------------------------------------------------------------------------------
 # Health check
@@ -67,6 +36,24 @@ async def health_check():
     logger.debug("GET '/' endpoint called.")
     return {"detail": "OK"}
 
+@Router.get(
+    "/health/auth",
+    summary="Health check endpoint (JWT protected)",
+)
+async def health_check_auth(
+    token_data: dict = Depends(create_jwt_verifier(PUBLIC_KEY, logger))
+):
+    user_id = token_data.get("sub")
+    user_email = token_data.get("email")
+    user_role = token_data.get("role")
+
+    logger.info(f" Valid JWT: user_id={user_id}, email={user_email}, role={user_role}")
+
+    return {
+        "detail": f"Order service is running. Authenticated as {user_email} (id={user_id}, role={user_role})"
+    }
+
+
 # ------------------------------------------------------------------------------------
 # Address
 # ------------------------------------------------------------------------------------
@@ -77,7 +64,7 @@ async def health_check():
 async def address(
     order_id: int,
     address: str,
-    token_data: dict = Depends(verify_token),
+    token_data: dict = Depends(create_jwt_verifier(PUBLIC_KEY, logger)),
     db: AsyncSession = Depends(get_db),
 ) -> None:
     # Guardar address
