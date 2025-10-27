@@ -41,7 +41,7 @@ async def health_check():
     summary="Health check endpoint (JWT protected)",
 )
 async def health_check_auth(
-    token_data: dict = Depends(create_jwt_verifier(lambda: PUBLIC_KEY, logger))
+    token_data: dict = Depends(create_jwt_verifier(lambda: PUBLIC_KEY["key"], logger))
 ):
     user_id = token_data.get("sub")
     user_email = token_data.get("email")
@@ -64,7 +64,7 @@ async def health_check_auth(
 async def address(
     order_id: int,
     address: str,
-    token_data: dict = Depends(create_jwt_verifier(lambda: PUBLIC_KEY, logger)),
+    token_data: dict = Depends(create_jwt_verifier(lambda: PUBLIC_KEY["key"], logger)),
     db: AsyncSession = Depends(get_db),
 ) -> None:
     # Guardar address
