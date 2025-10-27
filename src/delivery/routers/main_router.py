@@ -31,7 +31,7 @@ Router = APIRouter(
 # Health check
 # ------------------------------------------------------------------------------------
 @Router.get(
-    "/",
+    "/health",
     summary="Health check endpoint",
     response_model=Message,
 )
