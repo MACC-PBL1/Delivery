@@ -40,7 +40,7 @@ async def event_update_delivery_status(message: MessageType) -> None:
     exchange_type="fanout"
 )
 def public_key(message: MessageType) -> None:
-    logging.info(f"EVENT: Public key updated: {PUBLIC_KEY}")
+    logging.info(f"EVENT: Public key updated --> Message: {message}")
     global PUBLIC_KEY
     assert (public_key := message.get("public_key")) is not None, "'public_key' field should be present."
     PUBLIC_KEY["key"] = str(public_key)
