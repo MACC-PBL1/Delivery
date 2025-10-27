@@ -22,7 +22,10 @@ logger = logging.getLogger(__name__)
 # ----------------------------------------
 # Crear router principal
 # ----------------------------------------
-Router = APIRouter()
+Router = APIRouter(
+    prefix="/deliveries",
+    tags=["Delivery"],
+)
 
 # ------------------------------------------------------------------------------------
 # Health check
