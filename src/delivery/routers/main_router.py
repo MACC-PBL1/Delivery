@@ -72,7 +72,7 @@ async def address(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     logger.debug(
-        "POST '/deposit' endpoint called",
+        "POST '/deposit' endpoint called:\n",
         "\tParams:\n",
         f"\t\t- 'order_id': {order_id}",
         f"\t\t- 'address': {address}"
