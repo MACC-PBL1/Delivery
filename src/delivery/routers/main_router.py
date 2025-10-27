@@ -46,6 +46,7 @@ async def health_check():
 async def health_check_auth(
     token_data: dict = Depends(create_jwt_verifier(lambda: PUBLIC_KEY["key"], logger))
 ):
+    logger.debug("GET '/payment/auth' endpoint called.")
     user_id = token_data.get("sub")
     user_email = token_data.get("email")
     user_role = token_data.get("role")
@@ -70,6 +71,12 @@ async def address(
     token_data: dict = Depends(create_jwt_verifier(lambda: PUBLIC_KEY["key"], logger)),
     db: AsyncSession = Depends(get_db),
 ) -> None:
+    logger.debug(
+        "POST '/deposit' endpoint called",
+        "\tParams:\n",
+        f"\t\t- 'order_id': {order_id}",
+        f"\t\t- 'address': {address}"
+    )
     # Guardar address
     await update_address(db, order_id, address)
     asyncio.create_task(delivery_process(db, order_id))
