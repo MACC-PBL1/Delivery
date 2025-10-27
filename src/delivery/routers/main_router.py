@@ -70,7 +70,7 @@ async def address(
     address: str,
     token_data: dict = Depends(create_jwt_verifier(lambda: PUBLIC_KEY["key"], logger)),
     db: AsyncSession = Depends(get_db),
-) -> None:
+):
     logger.debug(
         "POST '/deposit' endpoint called:\n"
         "\tParams:\n"
@@ -80,3 +80,4 @@ async def address(
     # Guardar address
     await update_address(db, order_id, address)
     asyncio.create_task(delivery_process(db, order_id))
+    return {"address": address}
