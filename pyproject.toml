@@ -32,7 +32,7 @@ dev = [
 delivery = "delivery:start_server"
 
 [tool.setuptools.package-data]
-machine = [
+delivery = [
     "logging.ini",
     ".pylintrc",
 ]
