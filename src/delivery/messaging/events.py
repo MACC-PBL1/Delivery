@@ -1,6 +1,12 @@
+from delivery.busines_logic import check_postal_code
 from .global_vars import (
     LISTENING_QUEUES,
     PUBLIC_KEY,
+)
+from chassis.messaging import RabbitMQPublisher
+from ..messaging import (
+    PUBLISHING_QUEUES,
+    RABBITMQ_CONFIG
 )
 from ..sql.crud import (
     create_delivery,
@@ -44,3 +50,20 @@ def public_key(message: MessageType) -> None:
     global PUBLIC_KEY
     assert (public_key := message.get("public_key")) is not None, "'public_key' field should be present."
     PUBLIC_KEY["key"] = str(public_key)
+    
+@register_queue_handler(
+    queue=LISTENING_QUEUES["cmd"],
+    exchange="cmd",
+    exchange_type="topic"
+)
+def cmd(message: MessageType) -> None:
+    logger.info(f"EVENT: cmd --> Message: {message}")
+    assert (response_destination := message.get("response_destination")) is not None, "'response_destination' field should be present."
+    assert (postal_code := message.get("postal_code")) is not None, "'postal_code' field should be present."
+    with RabbitMQPublisher(
+        queue=response_destination,
+        rabbitmq_config=RABBITMQ_CONFIG,
+    ) as publisher:
+        publisher.publish({
+            "status": check_postal_code(postal_code),
+        })
