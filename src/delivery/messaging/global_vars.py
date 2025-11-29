@@ -28,6 +28,5 @@ LISTENING_QUEUES: Dict[LiteralString, LiteralString] = {
     "create": "delivery.create",
     "update_status": "delivery.update_status",
     "public_key": "client.public_key.delivery",
-    "cmd": "delivery.check_postal_code",
 }
 PUBLIC_KEY: Dict[str, Optional[str]] = {"key": None}
