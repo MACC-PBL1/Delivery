@@ -39,10 +39,3 @@ async def delivery_process(
             "order_id": order_id,
             "status": Delivery.STATUS_DELIVERED,
         })
-
-def check_postal_code(
-    postal_code: str,
-) -> bool:
-    identifiers=postal_code[0:2]
-    return identifiers in ("01","20","48")
-

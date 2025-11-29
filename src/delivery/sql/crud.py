@@ -17,11 +17,17 @@ def create_delivery(
     db: AsyncSession,
     order_id: int, 
     client_id: int,
+    city: str,
+    street: str,
+    zip: str,
 ) -> None:
     db.add(
         Delivery(
             order_id=order_id,
             client_id=client_id,
+            city=city,
+            street=street,
+            zip=zip,
         )
     )
     
