@@ -17,7 +17,7 @@ import logging
 # ----------------------------------------
 # Configurar logger
 # ----------------------------------------
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("delivery")
 
 # ----------------------------------------
 # Crear router principal
@@ -51,7 +51,12 @@ async def health_check_auth(
     user_email = token_data.get("email")
     user_role = token_data.get("role")
 
-    logger.info(f" Valid JWT: user_id={user_id}, email={user_email}, role={user_role}")
+    #logger.info(f" Valid JWT: user_id={user_id}, email={user_email}, role={user_role}")
+    logger.info(
+        f"Valid JWT: user_id={user_id}, email={user_email}, role={user_role}",
+        extra={"client_id": user_id}
+    )
+
 
     return {
         "detail": f"Order service is running. Authenticated as {user_email} (id={user_id}, role={user_role})"
@@ -71,12 +76,26 @@ async def address(
     token_data: dict = Depends(create_jwt_verifier(lambda: PUBLIC_KEY["key"], logger)),
     db: AsyncSession = Depends(get_db),
 ):
+    # logger.debug(
+    #     "POST '/deposit' endpoint called:\n"
+    #     "\tParams:\n"
+    #     f"\t\t- 'order_id': {order_id}"
+    #     f"\t\t- 'address': {address}"
+    # )
+
     logger.debug(
-        "POST '/deposit' endpoint called:\n"
-        "\tParams:\n"
-        f"\t\t- 'order_id': {order_id}"
-        f"\t\t- 'address': {address}"
+        "POST '/deliveries/address' called:\n"
+        f"  - order_id={order_id}\n"
+        f"  - address={address}"
     )
+
+    client_id = int(token_data["sub"])
+
+    logger.info(
+        f"Address updated for order {order_id}: '{address}'",
+        extra={"client_id": client_id, "order_id": order_id}
+    )
+
     # Guardar address
     await update_address(db, order_id, address)
     asyncio.create_task(delivery_process(db, order_id))

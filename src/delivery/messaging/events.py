@@ -21,11 +21,18 @@ import logging
 from chassis.consul import ConsulClient 
 import requests
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("delivery")
 
 @register_queue_handler(LISTENING_QUEUES["create"])
 async def event_create_delivery(message: MessageType) -> None:
-    logger.info(f"EVENT: Creation delivery --> Message: {message}")
+    #logger.info(f"EVENT: Creation delivery --> Message: {message}")
+    logger.info(
+        f"EVENT: Create delivery → {message}",
+        extra={
+            "client_id": message.get("client_id"),
+            "order_id": message.get("order_id"),
+        }
+    )
     assert (order_id := message.get("order_id")) is not None, "'order_id' field should be present."
     assert (client_id := message.get("client_id")) is not None, "'client_id' field should be present."
     order_id = int(order_id)
@@ -35,7 +42,11 @@ async def event_create_delivery(message: MessageType) -> None:
 
 @register_queue_handler(LISTENING_QUEUES["update_status"])
 async def event_update_delivery_status(message: MessageType) -> None:
-    logger.info(f"EVENT: Update delivery status --> Message: {message}")
+    #logger.info(f"EVENT: Update delivery status --> Message: {message}")
+    logger.info(
+        f"EVENT: Update delivery status → {message}",
+        extra={"order_id": message.get("order_id")}
+    )
     assert (order_id := message.get("order_id")) is not None, "'order_id' field should be present."
     assert (status := message.get("status")) is not None, "'status' field should be present."
     order_id = int(order_id)
