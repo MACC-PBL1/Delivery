@@ -44,11 +44,8 @@ async def event_create_delivery(message: MessageType) -> None:
         )
 
     logger.info(
-        f"EVENT: Create delivery → {message}",
-        extra={
-            "client_id": message.get("client_id"),
-            "order_id": message.get("order_id"),
-        }
+        "[EVENT:DELIVERY:CREATED] - Delivery created: "
+        f"order_id={order_id}, client_id={client_id}, city={city}, street={street}, zip={zip}"
     )
 
 @register_queue_handler(LISTENING_QUEUES["update_status"])
@@ -69,8 +66,8 @@ async def event_update_delivery_status(message: MessageType) -> None:
             await delivery_process(db, order_id)
 
     logger.info(
-        f"EVENT: Update delivery status → {message}",
-        extra={"order_id": message.get("order_id")}
+        "[EVENT:DELIVERY:STATUS_UPDATED] - Delivery status updated: "
+        f"order_id={order_id}, status={status}"
     )
 
 @register_queue_handler(
@@ -97,4 +94,7 @@ def public_key(message: MessageType) -> None:
         "Auth response did not contain expected 'public_key' field."
     )
     PUBLIC_KEY["key"] = str(new_key)
-    logger.info(f"EVENT: Public key updated: {message}")
+    logger.info(
+        "[EVENT:PUBLIC_KEY:UPDATED] - Public key updated: "
+        f"key={PUBLIC_KEY["key"]}"
+    )

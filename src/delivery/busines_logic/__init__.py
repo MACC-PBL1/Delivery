@@ -20,25 +20,21 @@ async def delivery_process(
     """
     Simulates a delivery process that runs in the background.
     """
-    try:
-        # Wait some time
-        await asyncio.sleep(3)
-        await update_status(db, order_id, Delivery.STATUS_DELIVERING)
-        logger.info(f"Order {order_id}: Delivering")
-        
-        # Wait again
-        await asyncio.sleep(5)
-        await update_status(db, order_id, Delivery.STATUS_DELIVERED)
-        logger.info(f"Order {order_id}: Delivered")
+    # Wait some time
+    await asyncio.sleep(3)
+    await update_status(db, order_id, Delivery.STATUS_DELIVERING)
+    logger.info(f"[LOG:DELIVERY_PROCESS] - Order {order_id}: Delivering")
+    
+    # Wait again
+    await asyncio.sleep(5)
+    await update_status(db, order_id, Delivery.STATUS_DELIVERED)
+    logger.info(f"[LOG:DELIVERY_PROCESS] - Order {order_id}: Delivered")
 
-        with RabbitMQPublisher(
-            queue=PUBLISHING_QUEUES["update_order"],
-            rabbitmq_config=RABBITMQ_CONFIG,
-        ) as publisher:
-            publisher.publish({
-                "order_id": order_id,
-                "status": Delivery.STATUS_DELIVERED,
-            })
-
-    except Exception as e:
-        logger.error(f"ERR: {e}")
+    with RabbitMQPublisher(
+        queue=PUBLISHING_QUEUES["update_order"],
+        rabbitmq_config=RABBITMQ_CONFIG,
+    ) as publisher:
+        publisher.publish({
+            "order_id": order_id,
+            "status": Delivery.STATUS_DELIVERED,
+        })

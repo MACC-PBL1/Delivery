@@ -21,19 +21,18 @@ from chassis.logging.rabbitmq_logging import setup_rabbitmq_logging
 # Configure logging
 logging.config.fileConfig(os.path.join(os.path.dirname(__file__), "logging.ini"))
 logger = logging.getLogger(__name__)
-setup_rabbitmq_logging("delivery", RABBITMQ_CONFIG, level=logging.INFO)
 
 # App Lifespan #####################################################################################
 @asynccontextmanager
 async def lifespan(__app: FastAPI):
     """Lifespan context manager."""
     try:
-        logger.info("Starting up")
+        logger.info("[LOG:DELIVERY] - Starting up")
         try:
-            logger.info("Creating database tables")
+            logger.info("[LOG:DELIVERY] - Creating database tables")
             async with Engine.begin() as conn:
                 await conn.run_sync(Base.metadata.create_all)
-            logger.info("Starting RabbitMQ listeners")
+            logger.info("[LOG:DELIVERY] - Starting RabbitMQ listeners")
             try:
                 for _, queue in LISTENING_QUEUES.items():
                     Thread(
@@ -43,9 +42,10 @@ async def lifespan(__app: FastAPI):
                     ).start()
             except Exception as e:
                 logger.error(
-                    f"Could not start the RabbitMQ listeners: {e}"
+                    f"[LOG:DELIVERY] - Could not start the RabbitMQ listeners: Reason={e}",
+                    exc_info=True,
                 )
-            logger.info("Registering service to Consul...")
+            logger.info("[LOG:DELIVERY] - Registering service to Consul...")
             try:
                 service_port = int(os.getenv("PORT", "8000"))
                 consul = ConsulClient(logger=logger)
@@ -56,20 +56,20 @@ async def lifespan(__app: FastAPI):
                 )
                 
             except Exception as e:
-                logger.error(f"Failed to register with Consul: {e}")
+                logger.error(f"[LOG:DELIVERY] - Failed to register with Consul: Reason={e}", exc_info=True)
         except Exception:
             logger.error(
-                "Could not create tables at startup",
+                "[LOG:DELIVERY] - Could not create tables at startup",
             )
         yield
     finally:
-        logger.info("Shutting down database")
+        logger.info("[LOG:DELIVERY] - Shutting down database")
         await Engine.dispose()
 
 
 # OpenAPI Documentation ############################################################################
 APP_VERSION = os.getenv("APP_VERSION", "2.0.0")
-logger.info("Running app version %s", APP_VERSION)
+logger.info("[LOG:DELIVERY] - Running app version %s", APP_VERSION)
 DESCRIPTION = """
 Order microservice
 """
@@ -104,6 +104,6 @@ def start_server():
     config.bind = [os.getenv("HOST", "0.0.0.0") + ":" + os.getenv("PORT", "8000")]
     config.workers = int(os.getenv("WORKERS", "1"))
 
-    logger.info("Starting Hypercorn server on %s", config.bind)
+    logger.info("[LOG:DELIVERY] - Starting Hypercorn server on %s", config.bind)
 
     asyncio.run(serve(APP, config)) # type: ignore
