@@ -1,4 +1,4 @@
-from .global_vars import (
+from ..global_vars import (
     LISTENING_QUEUES,
     PUBLIC_KEY,
 )
@@ -13,7 +13,6 @@ from chassis.messaging import (
     register_queue_handler
 )
 from chassis.sql import SessionLocal
-import asyncio
 import logging
 import requests
 
