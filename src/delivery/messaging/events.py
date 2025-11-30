@@ -65,7 +65,8 @@ async def event_update_delivery_status(message: MessageType) -> None:
 
     # Beti izango da 'packaged', baino bueno oraingoz horrela
     if status == "packaged":
-        asyncio.create_task(delivery_process(db, order_id))
+        async with SessionLocal() as db:
+            await delivery_process(db, order_id)
 
     logger.info(
         f"EVENT: Update delivery status → {message}",

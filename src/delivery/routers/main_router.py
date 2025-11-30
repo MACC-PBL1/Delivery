@@ -17,7 +17,7 @@ import logging
 # ----------------------------------------
 # Configurar logger
 # ----------------------------------------
-logger = logging.getLogger("delivery")
+logger = logging.getLogger(__name__)
 
 # ----------------------------------------
 # Crear router principal
