@@ -12,6 +12,7 @@ class Delivery(BaseModel):
     STATUS_PACKAGED = "packaged"
     STATUS_DELIVERING = "delivering"
     STATUS_DELIVERED = "delivered"
+    STATUS_CANCELLED = "cancelled"
 
     order_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
     client_id: Mapped[int] = mapped_column(Integer, nullable=False)

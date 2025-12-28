@@ -23,10 +23,15 @@ RABBITMQ_CONFIG: RabbitMQConfig = {
 PUBLISHING_QUEUES: Dict[LiteralString, LiteralString] = {
     "update_order": "order.update_status",
     "refresh_pk": "client.refresh_public_key",
+    "delivery.cancelled": "delivery.cancelled",
+    "delivery.cancel_rejected": "delivery.cancel_rejected",
+    "delivery.not_found": "delivery.not_found",
 }
 LISTENING_QUEUES: Dict[LiteralString, LiteralString] = {
     "create": "delivery.create",
     "update_status": "delivery.update_status",
+    "delivery_cancel": "delivery.cancel",   
     "public_key": "client.public_key.delivery",
+ 
 }
 PUBLIC_KEY: Dict[str, Optional[str]] = {"key": None}

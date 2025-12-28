@@ -1,16 +1,24 @@
+from ..sql import Delivery
+
 from ..global_vars import (
     LISTENING_QUEUES,
     PUBLIC_KEY,
+    PUBLISHING_QUEUES,
+    RABBITMQ_CONFIG,
 )
+
 from ..busines_logic import delivery_process
 from ..sql.crud import (
     create_delivery,
-    update_status
+    update_status,
+    get_delivery_by_order,
 )
 from chassis.consul import ConsulClient 
+
 from chassis.messaging import (
-    MessageType,
-    register_queue_handler
+    MessageType, 
+    RabbitMQPublisher,
+    register_queue_handler,
 )
 from chassis.sql import SessionLocal
 import logging
@@ -68,6 +76,57 @@ async def event_update_delivery_status(message: MessageType) -> None:
         "[EVENT:DELIVERY:STATUS_UPDATED] - Delivery status updated: "
         f"order_id={order_id}, status={status}"
     )
+
+
+@register_queue_handler(LISTENING_QUEUES["delivery_cancel"])
+async def delivery_cancel(message: MessageType) -> None:
+    """
+    Cancels a delivery if it has not been completed yet.
+    """
+
+    assert (order_id := message.get("order_id")) is not None, "'order_id' field required"
+    order_id = int(order_id)
+
+    logger.info(
+        "[CMD:DELIVERY:CANCEL] - order_id=%s",
+        order_id,
+    )
+
+    async with SessionLocal() as db:
+        delivery = await get_delivery_by_order(db, order_id)
+
+        if delivery is None:
+            event_type = "delivery.not_found"
+
+        elif delivery.status == Delivery.STATUS_DELIVERED:
+            event_type = "delivery.cancel_rejected"
+
+        elif delivery.status == Delivery.STATUS_CANCELLED:
+            event_type = "delivery.cancelled"
+
+        else:
+            await update_status(db, order_id, Delivery.STATUS_CANCELLED)
+            event_type = "delivery.cancelled"
+
+        await db.commit()
+
+    with RabbitMQPublisher(
+        queue="",
+        rabbitmq_config=RABBITMQ_CONFIG,
+        exchange="evt",
+        exchange_type="topic",
+        routing_key=event_type,
+    ) as publisher:
+        publisher.publish({
+            "order_id": order_id,
+        })
+
+    logger.info(
+        "[EVENT:%s] - order_id=%s",
+        event_type.upper(),
+        order_id,
+    )
+
 
 @register_queue_handler(
     queue=LISTENING_QUEUES["public_key"],

@@ -3,6 +3,7 @@ from .crud import (
     get_delivery,
     update_address,
     update_status,
+    get_delivery_by_order,
 )
 from .models import Delivery
 from .schemas import Message
@@ -18,4 +19,5 @@ __all__: List[LiteralString] = [
     "Message",
     "update_address",
     "update_status",
+    "get_delivery_by_order",
 ]
