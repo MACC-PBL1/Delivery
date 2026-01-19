@@ -19,19 +19,10 @@ RABBITMQ_CONFIG: RabbitMQConfig = {
     "client_key": Path(client_key_path) if (client_key_path := os.getenv("RABBITMQ_CLIENT_KEY_PATH", None)) is not None else None,
     "prefetch_count": int(os.getenv("RABBITMQ_PREFETCH_COUNT", 10))
 }
-
-PUBLISHING_QUEUES: Dict[LiteralString, LiteralString] = {
-    "update_order": "order.update_status",
-    "refresh_pk": "client.refresh_public_key",
-    "delivery.cancelled": "delivery.cancelled",
-    "delivery.cancel_rejected": "delivery.cancel_rejected",
-    "delivery.not_found": "delivery.not_found",
-}
 LISTENING_QUEUES: Dict[LiteralString, LiteralString] = {
-    "create": "delivery.create",
-    "update_status": "delivery.update_status",
-    "delivery_cancel": "delivery.cancel",   
+    "delivery_create": "delivery.create",
+    "delivery_start": "delivery.start",
+    "saga_reserve": "delivery.cancel",
     "public_key": "client.public_key.delivery",
- 
 }
 PUBLIC_KEY: Dict[str, Optional[str]] = {"key": None}

@@ -1,24 +1,20 @@
-from ..sql import Delivery
-
 from ..global_vars import (
     LISTENING_QUEUES,
     PUBLIC_KEY,
-    PUBLISHING_QUEUES,
     RABBITMQ_CONFIG,
 )
-
 from ..busines_logic import delivery_process
 from ..sql.crud import (
     create_delivery,
-    update_status,
-    get_delivery_by_order,
+    Delivery,
+    get_delivery,
+    update_status
 )
 from chassis.consul import ConsulClient 
-
 from chassis.messaging import (
-    MessageType, 
+    MessageType,
     RabbitMQPublisher,
-    register_queue_handler,
+    register_queue_handler
 )
 from chassis.sql import SessionLocal
 import logging
@@ -26,7 +22,7 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-@register_queue_handler(LISTENING_QUEUES["create"])
+@register_queue_handler(LISTENING_QUEUES["delivery_create"])
 async def event_create_delivery(message: MessageType) -> None:
     assert (order_id := message.get("order_id")) is not None, "'order_id' field should be present."
     assert (client_id := message.get("client_id")) is not None, "'client_id' field should be present."
@@ -41,7 +37,7 @@ async def event_create_delivery(message: MessageType) -> None:
     zip = str(zip)
 
     async with SessionLocal() as db:
-        create_delivery(
+        await create_delivery(
             db=db, 
             order_id=order_id, 
             client_id=client_id,
@@ -55,79 +51,57 @@ async def event_create_delivery(message: MessageType) -> None:
         f"order_id={order_id}, client_id={client_id}, city={city}, street={street}, zip={zip}"
     )
 
-@register_queue_handler(LISTENING_QUEUES["update_status"])
+@register_queue_handler(LISTENING_QUEUES["delivery_start"])
 async def event_update_delivery_status(message: MessageType) -> None:
     assert (order_id := message.get("order_id")) is not None, "'order_id' field should be present."
-    assert (status := message.get("status")) is not None, "'status' field should be present."
     
     order_id = int(order_id)
-    status = str(status)
-
 
     async with SessionLocal() as db:
-        await update_status(db, order_id, status)
+        await update_status(db, order_id, Delivery.STATUS_PACKAGED)
+        await delivery_process(db, order_id)
 
-    # Beti izango da 'packaged', baino bueno oraingoz horrela
-    if status == "packaged":
-        async with SessionLocal() as db:
-            await delivery_process(db, order_id)
-
-    logger.info(
-        "[EVENT:DELIVERY:STATUS_UPDATED] - Delivery status updated: "
-        f"order_id={order_id}, status={status}"
-    )
-
-
-@register_queue_handler(LISTENING_QUEUES["delivery_cancel"])
+@register_queue_handler(
+    queue=LISTENING_QUEUES["saga_reserve"],
+    exchange="cmd",
+    exchange_type="topic",
+    routing_key="delivery.cancel"
+)
 async def delivery_cancel(message: MessageType) -> None:
-    """
-    Cancels a delivery if it has not been completed yet.
-    """
+    assert (order_id := message.get("order_id")) is not None, "'order_id' should exist"
+    assert (response_exchange := message.get("response_exchange")) is not None, "'response_exchange' should exist"
+    assert (response_exchange_type := message.get("response_exchange_type")) is not None, "'response_exchange_type' should exist"
+    assert (response_routing_key := message.get("response_routing_key")) is not None, "'response_routing_key' should exist"
 
-    assert (order_id := message.get("order_id")) is not None, "'order_id' field required"
     order_id = int(order_id)
+    response_exchange = str(response_exchange)
+    response_exchange_type = str(response_exchange_type)
+    response_routing_key = str(response_routing_key)
+    response = {}
 
     logger.info(
-        "[CMD:DELIVERY:CANCEL] - order_id=%s",
-        order_id,
+        "[CMD:DELIVERY_CANCEL:RECEIVED] - Received cancel command: "
+        f"order_id={order_id}"
     )
 
     async with SessionLocal() as db:
-        delivery = await get_delivery_by_order(db, order_id)
-
-        if delivery is None:
-            event_type = "delivery.not_found"
-
-        elif delivery.status == Delivery.STATUS_DELIVERED:
-            event_type = "delivery.cancel_rejected"
-
-        elif delivery.status == Delivery.STATUS_CANCELLED:
-            event_type = "delivery.cancelled"
-
-        else:
+        assert (delivery := await get_delivery(db, order_id)) is not None, "Delivery should exist"
+        if delivery.status in [Delivery.STATUS_PENDING, Delivery.STATUS_PACKAGED]:
+            response["status"] = "OK"
             await update_status(db, order_id, Delivery.STATUS_CANCELLED)
-            event_type = "delivery.cancelled"
-
-        await db.commit()
+        else:
+            response["status"] = "FAIL"
 
     with RabbitMQPublisher(
         queue="",
         rabbitmq_config=RABBITMQ_CONFIG,
-        exchange="evt",
-        exchange_type="topic",
-        routing_key=event_type,
+        exchange=response_exchange,
+        exchange_type=response_exchange_type,
+        routing_key=response_routing_key,
+        auto_delete_queue=True,
     ) as publisher:
-        publisher.publish({
-            "order_id": order_id,
-        })
-
-    logger.info(
-        "[EVENT:%s] - order_id=%s",
-        event_type.upper(),
-        order_id,
-    )
-
-
+        publisher.publish(response)
+        
 @register_queue_handler(
     queue=LISTENING_QUEUES["public_key"],
     exchange="public_key",

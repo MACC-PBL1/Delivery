@@ -8,16 +8,16 @@ from sqlalchemy.orm import (
 class Delivery(BaseModel):
     __tablename__ = "delivery"
 
-    STATUS_PENDING = "pending"
-    STATUS_PACKAGED = "packaged"
-    STATUS_DELIVERING = "delivering"
-    STATUS_DELIVERED = "delivered"
-    STATUS_CANCELLED = "cancelled"
+    STATUS_PENDING = "Pending"
+    STATUS_PACKAGED = "Packaged"
+    STATUS_DELIVERING = "Delivering"
+    STATUS_DELIVERED = "Delivered"
+    STATUS_CANCELLED = "Cancelled"
 
     order_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False)
     client_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    city: Mapped[str] = mapped_column(String, nullable=False)
-    street: Mapped[str] = mapped_column(String, nullable=False)
-    zip: Mapped[str] = mapped_column(String, nullable=False)
+    city: Mapped[str] = mapped_column(String(50), nullable=False)
+    street: Mapped[str] = mapped_column(String(50), nullable=False)
+    zip: Mapped[str] = mapped_column(String(50), nullable=False)
     status: Mapped[str] = mapped_column(String(50), default=STATUS_PENDING)
 
