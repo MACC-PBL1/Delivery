@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 # Crear router principal
 # ----------------------------------------
 Router = APIRouter(
-    prefix="/deliveries",
+    prefix="/delivery",
     tags=["Delivery"],
 )
 
