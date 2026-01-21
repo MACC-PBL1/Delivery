@@ -89,8 +89,16 @@ async def delivery_cancel(message: MessageType) -> None:
         if delivery.status in [Delivery.STATUS_PENDING, Delivery.STATUS_PACKAGED]:
             response["status"] = "OK"
             await update_status(db, order_id, Delivery.STATUS_CANCELLED)
+            logger.info(
+                "[CMD:DELIVERY_CANCEL:SUCCESS] - Delivery cancelled: "
+                f"order_id={order_id}"
+            )
         else:
             response["status"] = "FAIL"
+            logger.info(
+                "[CMD:DELIVERY_CANCEL:FAILED] - Delivery cancellation failed: "
+                f"order_id={order_id}"
+            )
 
     with RabbitMQPublisher(
         queue="",

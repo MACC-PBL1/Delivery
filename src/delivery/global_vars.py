@@ -6,6 +6,7 @@ from typing import (
     Optional
 )
 import os
+import socket
 
 # RabbitMQ Configuration ###########################################################################
 RABBITMQ_CONFIG: RabbitMQConfig = {
@@ -19,10 +20,10 @@ RABBITMQ_CONFIG: RabbitMQConfig = {
     "client_key": Path(client_key_path) if (client_key_path := os.getenv("RABBITMQ_CLIENT_KEY_PATH", None)) is not None else None,
     "prefetch_count": int(os.getenv("RABBITMQ_PREFETCH_COUNT", 10))
 }
-LISTENING_QUEUES: Dict[LiteralString, LiteralString] = {
+LISTENING_QUEUES: Dict[LiteralString, str] = {
     "delivery_create": "delivery.create",
     "delivery_start": "delivery.start",
     "saga_reserve": "delivery.cancel",
-    "public_key": "client.public_key.delivery",
+    "public_key": f"client.public_key.delivery.{socket.gethostname()}",
 }
 PUBLIC_KEY: Dict[str, Optional[str]] = {"key": None}
